@@ -53,67 +53,8 @@ body{
   overflow-x:hidden;
 }
 
-/* ══ SETUP SCREEN ══ */
-#setup-screen{
-  min-height:100vh;
-  background:linear-gradient(160deg, var(--blue-900) 0%, var(--blue-700) 60%, var(--blue-500) 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:24px;
-  position:relative;overflow:hidden;
-}
-#setup-screen::before{
-  content:'';position:absolute;top:-80px;right:-80px;
-  width:300px;height:300px;
-  background:radial-gradient(circle, rgba(96,165,250,0.15) 0%, transparent 70%);
-  border-radius:50%;
-}
-#setup-screen::after{
-  content:'';position:absolute;bottom:-60px;left:-60px;
-  width:250px;height:250px;
-  background:radial-gradient(circle, rgba(30,77,155,0.3) 0%, transparent 70%);
-  border-radius:50%;
-}
-.setup-logo{
-  width:80px;height:80px;
-  background:linear-gradient(135deg, var(--blue-400), var(--blue-600));
-  border-radius:24px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:38px;
-  margin-bottom:20px;
-  box-shadow:0 8px 32px rgba(59,130,246,0.4);
-  position:relative;z-index:1;
-  animation:float 3s ease-in-out infinite;
-}
-@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
-.setup-title{color:#fff;font-size:24px;font-weight:700;margin-bottom:6px;position:relative;z-index:1;}
-.setup-sub{color:var(--blue-200);font-size:13px;margin-bottom:28px;text-align:center;position:relative;z-index:1;line-height:1.6;}
-.setup-card{
-  background:rgba(255,255,255,0.97);
-  border-radius:var(--radius-lg);
-  padding:24px;width:100%;
-  box-shadow:var(--shadow-xl);
-  position:relative;z-index:1;
-  backdrop-filter:blur(20px);
-}
-.setup-card label{display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
-.setup-card input{
-  width:100%;padding:13px 16px;
-  border:2px solid var(--gray-200);border-radius:var(--radius-sm);
-  font-family:'Hind Siliguri',sans-serif;font-size:14px;
-  outline:none;transition:all .2s;background:var(--gray-50);color:var(--gray-800);
-  margin-bottom:14px;
-}
-.setup-card input:focus{border-color:var(--blue-500);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,0.1);}
-.setup-help{
-  background:linear-gradient(135deg,#EFF6FF,#DBEAFE);
-  border:1px solid var(--blue-200);border-radius:var(--radius-sm);
-  padding:12px 14px;font-size:12px;color:var(--blue-700);
-  margin-bottom:16px;line-height:1.8;
-}
-.setup-help a{color:var(--blue-500);font-weight:600;}
-
 /* ══ MAIN APP ══ */
-#app{display:none;}
+#app{display:block;}
 
 /* ══ TOP HEADER ══ */
 .top-header{
@@ -622,30 +563,7 @@ textarea.f-input{resize:vertical;min-height:72px;}
 </head>
 <body>
 
-<!-- ══════════ SETUP ══════════ -->
-<div id="setup-screen">
-  <div class="setup-logo">🕌</div>
-  <div class="setup-title">মসজিদ ফান্ড ট্র্যাকার</div>
-  <div class="setup-sub">প্রথমবার সেটআপ করুন<br>Google Sheets সংযোগ দিন</div>
-  <div class="setup-card">
-    <div class="setup-help">
-      📋 <strong>সেটআপ গাইড:</strong><br>
-      ১. Google Sheets তৈরি করুন → Sheet ID নিন<br>
-      ২. Apps Script Deploy করুন → Web App URL নিন<br>
-      ৩. নিচে URL ও পাসওয়ার্ড দিন
-    </div>
-    <label>Apps Script Web App URL</label>
-    <input type="url" id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec">
-    <label>Google Sheet ID</label>
-    <input type="text" id="cfg-sheetid" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
-    <label>অ্যাডমিন পাসওয়ার্ড</label>
-    <input type="password" id="cfg-pass" placeholder="৪-৬ ডিজিট" maxlength="6">
-    <label>ফান্ডের নাম</label>
-    <input type="text" id="cfg-name" placeholder="বায়তুল আমান মসজিদ ফান্ড">
-    <button class="btn btn-blue" onclick="saveConfig()">✅ শুরু করুন</button>
-    <button class="btn btn-outline" onclick="useDemoMode()" style="margin-top:10px;">🎯 ডেমো দেখুন</button>
-  </div>
-</div>
+
 
 <!-- ══════════ APP ══════════ -->
 <div id="app">
@@ -1012,104 +930,38 @@ textarea.f-input{resize:vertical;min-height:72px;}
 <!-- ══════════════════ SCRIPT ══════════════════ -->
 <script>
 // ════════════ STATE ════════════
-let CFG = {};
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcAB-qHg0CAIRv5sZpZb7Lw094Q0MSVQQYdgH_R2tfAFAZ6NXChVC25eo945BC3w9R/exec';
+const ADMIN_PASS = '1234'; // এখানে পাসওয়ার্ড বদলান
+
+let CFG = { url: SCRIPT_URL, pass: ADMIN_PASS };
 let DATA = { transactions:[], members:[], settings:{}, categories:{income:[], expense:[]} };
-let DEMO = false;
 let adminOpen = false;
 let pieInst = null, barInst = null;
 let currentFilter = 'all';
 
-const DEMO_DATA = {
-  transactions:[
-    {id:'1',type:'income',cat:'শুক্রবার দান',title:'জুমার নামাজের দান',amount:5200,date:'2025-01-10',note:''},
-    {id:'2',type:'member',cat:'মাসিক চাঁদা',title:'আব্দুল করিম - চাঁদা',amount:500,date:'2025-01-09',note:''},
-    {id:'3',type:'expense',cat:'বিদ্যুৎ বিল',title:'জানুয়ারি মাসের বিল',amount:1800,date:'2025-01-08',note:''},
-    {id:'4',type:'income',cat:'বিশেষ অনুদান',title:'রমজান ফান্ড',amount:12000,date:'2025-01-05',note:'বিশেষ দানকারী'},
-    {id:'5',type:'expense',cat:'পরিষ্কার',title:'পরিষ্কার সামগ্রী',amount:650,date:'2025-01-04',note:''},
-    {id:'6',type:'member',cat:'মাসিক চাঁদা',title:'মোহাম্মদ আলী - চাঁদা',amount:500,date:'2025-01-03',note:''},
-    {id:'7',type:'income',cat:'নির্মাণ তহবিল',title:'বিশেষ দান',amount:8000,date:'2024-12-28',note:''},
-    {id:'8',type:'expense',cat:'ইমাম বেতন',title:'ডিসেম্বর বেতন',amount:6000,date:'2024-12-31',note:''},
-  ],
-  members:[
-    {id:'1',name:'মাওলানা আব্দুল করিম',role:'ইমাম',phone:'০১৭১২৩৪৫৬৭৮',monthly:500,photo:''},
-    {id:'2',name:'মোহাম্মদ আলী',role:'সভাপতি',phone:'০১৮১২৩৪৫৬৭৮',monthly:500,photo:''},
-    {id:'3',name:'রহিম সাহেব',role:'কোষাধ্যক্ষ',phone:'০১৯১২৩৪৫৬৭৮',monthly:200,photo:''},
-  ],
-  settings:{name:'বায়তুল আমান মসজিদ ফান্ড',about:'মসজিদের উন্নয়ন ও পরিচালনার জন্য।',contact:'০১৭১২৩৪৫৬৭৮'},
-  categories:{
-    income:['শুক্রবার দান','মাসিক দান','বিশেষ অনুদান','নির্মাণ তহবিল','ঈদ কালেকশন','জাকাত'],
-    expense:['বিদ্যুৎ বিল','পানি বিল','ইমাম বেতন','পরিষ্কার','নির্মাণ কাজ','অন্যান্য']
-  }
-};
-
 // ════════════ INIT ════════════
 window.onload = () => {
-  const saved = localStorage.getItem('mf_cfg');
-  if (saved) { CFG = JSON.parse(saved); startApp(); }
-  else { document.getElementById('setup-screen').style.display='flex'; }
-};
-
-function saveConfig(){
-  const url = document.getElementById('cfg-url').value.trim();
-  const sid = document.getElementById('cfg-sheetid').value.trim();
-  const pass = document.getElementById('cfg-pass').value.trim();
-  const name = document.getElementById('cfg-name').value.trim();
-  if(!pass||!name){ toast('সব তথ্য পূরণ করুন','error'); return; }
-  CFG = {url, sid, pass, name};
-  localStorage.setItem('mf_cfg', JSON.stringify(CFG));
-  startApp();
-}
-
-function useDemoMode(){
-  DEMO = true;
-  CFG = {url:'',sid:'',pass:'1234',name:'বায়তুল আমান মসজিদ ফান্ড'};
-  DATA = JSON.parse(JSON.stringify(DEMO_DATA));
-  showApp();
-}
-
-function startApp(){
-  document.getElementById('setup-screen').style.display='none';
-  document.getElementById('app').style.display='block';
+  document.getElementById('app').style.display = 'block';
   loadData();
-}
-
-function showApp(){
-  document.getElementById('setup-screen').style.display='none';
-  document.getElementById('app').style.display='block';
-  renderAll();
-}
+};
 
 // ════════════ API ════════════
 async function loadData(){
-  if(DEMO){ renderAll(); return; }
   try{
     const r = await fetch(CFG.url+'?action=getAll');
     const j = await r.json();
     if(j.success){ DATA=j.data; renderAll(); }
-    else{ toast('ডেটা লোড ব্যর্থ','error'); DATA=JSON.parse(JSON.stringify(DEMO_DATA)); renderAll(); }
+    else{ toast('ডেটা লোড ব্যর্থ — পুনরায় চেষ্টা করুন','error'); }
   }catch(e){
-    toast('ডেমো মোডে দেখাচ্ছে','error');
-    DATA=JSON.parse(JSON.stringify(DEMO_DATA)); renderAll();
+    toast('সংযোগ ব্যর্থ হয়েছে','error');
   }
 }
 
 async function api(payload){
-  if(DEMO){ demoWrite(payload); return {success:true}; }
   try{
     const r = await fetch(CFG.url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     return await r.json();
   }catch(e){ return {success:false}; }
-}
-
-function demoWrite({action,data}){
-  if(action==='addTxn') DATA.transactions.unshift({...data,id:Date.now().toString()});
-  else if(action==='updateTxn'){const i=DATA.transactions.findIndex(t=>t.id===data.id);if(i>-1)DATA.transactions[i]=data;}
-  else if(action==='deleteTxn') DATA.transactions=DATA.transactions.filter(t=>t.id!==data.id);
-  else if(action==='addMember') DATA.members.push({...data,id:Date.now().toString()});
-  else if(action==='updateMember'){const i=DATA.members.findIndex(m=>m.id===data.id);if(i>-1)DATA.members[i]=data;}
-  else if(action==='deleteMember') DATA.members=DATA.members.filter(m=>m.id!==data.id);
-  else if(action==='updateSettings') DATA.settings={...DATA.settings,...data};
-  else if(action==='updateCategories') DATA.categories={...DATA.categories,...data};
 }
 
 // ════════════ RENDER ════════════
@@ -1137,7 +989,7 @@ function calcStats(){
 
 function renderHeader(){
   const {inc,exp,bal}=calcStats();
-  document.getElementById('brand-name').textContent='🕌 '+(DATA.settings.name||CFG.name||'মসজিদ ফান্ড');
+  document.getElementById('brand-name').textContent='🕌 '+(DATA.settings.name||'মসজিদ ফান্ড');
   document.getElementById('main-balance').innerHTML=`${fmt(bal)} <span class="bal-currency">৳</span>`;
   document.getElementById('stat-inc').textContent=fmtShort(inc)+'৳';
   document.getElementById('stat-exp').textContent=fmtShort(exp)+'৳';
@@ -1250,7 +1102,7 @@ function renderSettings(){
   const s=DATA.settings||{};
   ['name','about','contact'].forEach(k=>{
     const el=document.getElementById('set-'+k);
-    if(el) el.value=s[k]||CFG[k]||'';
+    if(el) el.value=s[k]||'';
   });
 }
 
@@ -1521,14 +1373,13 @@ async function saveSettings(){
     contact:document.getElementById('set-contact').value.trim()
   };
   const np=document.getElementById('set-pass').value.trim();
-  if(np){ CFG.pass=np; localStorage.setItem('mf_cfg',JSON.stringify(CFG)); }
+  if(np){ CFG.pass=np; }
   const r=await api({action:'updateSettings',data});
   if(r.success){ DATA.settings={...DATA.settings,...data}; renderAll(); toast('✅ সেটিংস সেভ হয়েছে','success'); }
 }
 
 function resetApp(){
-  if(!confirm('সব ডেটা ও সেটিংস মুছে ফেলবেন?')) return;
-  localStorage.removeItem('mf_cfg');
+  if(!confirm('সেটিংস রিসেট করবেন?')) return;
   location.reload();
 }
 
