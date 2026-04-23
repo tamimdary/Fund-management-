@@ -930,7 +930,7 @@ textarea.f-input{resize:vertical;min-height:72px;}
 <!-- ══════════════════ SCRIPT ══════════════════ -->
 <script>
 // ════════════ STATE ════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcAB-qHg0CAIRv5sZpZb7Lw094Q0MSVQQYdgH_R2tfAFAZ6NXChVC25eo945BC3w9R/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrP75809imTKoV5x4zaKST83BL6xJV88MHzxxyw1yycDs5CMc8imp_vdXNmdq0V2w/exec';
 const ADMIN_PASS = '1234'; // এখানে পাসওয়ার্ড বদলান
 
 let CFG = { url: SCRIPT_URL, pass: ADMIN_PASS };
@@ -959,7 +959,9 @@ async function loadData(){
 
 async function api(payload){
   try{
-    const r = await fetch(CFG.url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const encoded = encodeURIComponent(JSON.stringify(payload.data||{}));
+    const url = `${CFG.url}?action=${payload.action}&data=${encoded}`;
+    const r = await fetch(url);
     return await r.json();
   }catch(e){ return {success:false}; }
 }
